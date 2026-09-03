@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booth4AI — Curated AI Prompt & Visual Engine</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .masonry-item {
+      break-inside: avoid;
+      margin-bottom: 1.5rem;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3f3f46;
+    }
+  </style>
+</head>
+<body class="bg-[#09090b] text-zinc-100 min-h-screen selection:bg-indigo-600 selection:text-white font-sans antialiased">
+
+  <!-- Background Glow -->
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.18),transparent_70%)] pointer-events-none z-0"></div>
+
+  <!-- Sticky Floating Navbar -->
+  <header class="sticky top-4 z-40 max-w-6xl mx-auto px-4">
+    <nav class="bg-[#121216]/90 border border-zinc-800 backdrop-blur-md px-6 py-3.5 rounded-full flex items-center justify-between shadow-2xl">
+      <a href="#" class="flex items-center gap-2 font-extrabold text-lg tracking-tight text-white">
+        <i data-lucide="sparkles" class="w-5 h-5 text-indigo-400"></i>
+        <span>Booth<span class="text-indigo-400">4AI</span></span>
+      </a>
+
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-400">
+        <a href="#" class="text-white hover:text-indigo-400 transition-colors">Prompts</a>
+        <a href="#" onclick="openModal('submit-modal')" class="hover:text-white transition-colors">Post Content</a>
+      </div>
+
+      <button onclick="openModal('submit-modal')" class="px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-1.5">
+        <i data-lucide="plus" class="w-4 h-4"></i> Post Blueprint
+      </button>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative z-10 pt-16 pb-6 px-6 max-w-4xl mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/60 text-xs font-medium text-indigo-300 mb-5">
+      <i data-lucide="zap" class="w-3.5 h-3.5"></i> Next-Generation AI Creation & Prompt Vault
+    </div>
+    <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-[1.15]">
+      Turn Ideas Into <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Visual Reality</span>
+    </h1>
+    <p class="mt-4 text-zinc-400 text-sm sm:text-base max-w-xl mx-auto">
+      Explore blueprints for Midjourney, FLUX.1, GPT Image, Stable Diffusion, and cinematic renders.
+    </p>
+
+    <!-- Global Search -->
+    <div class="mt-8 relative max-w-2xl mx-auto">
+      <i data-lucide="search" class="w-5 h-5 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2"></i>
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Search keywords (e.g. isometric, brutalist, cinematic, exploded-view)..."
+        class="w-full pl-12 pr-4 py-3.5 rounded-full bg-[#121216] border border-zinc-800 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-2xl transition-all"
+        oninput="handleSearch()"
+      />
+    </div>
+  </section>
+
+  <!-- Filter Controls -->
+  <section class="relative z-10 max-w-7xl mx-auto px-6 mt-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-zinc-800/80">
+      <div class="flex flex-wrap items-center gap-2" id="model-filters">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-500 font-medium">Category:</span>
+        <select id="category-select" onchange="handleCategoryChange()" class="bg-[#121216] border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-indigo-500">
+          <option value="All">All Categories</option>
+          <option value="Photorealistic">Photorealistic</option>
+          <option value="Infographic">Infographic</option>
+          <option value="Cinematic">Cinematic</option>
+          <option value="Retro Art">Retro Art</option>
+          <option value="3D & Concept">3D & Concept</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Masonry Grid -->
+  <main class="relative z-10 max-w-7xl mx-auto px-6 py-8">
+    <div id="masonry-feed" class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6">
+      <!-- Cards rendered here -->
+    </div>
+    <div id="empty-state" class="hidden text-center py-20 bg-[#121216]/50 border border-zinc-800 rounded-2xl">
+      <p class="text-zinc-400 text-sm">No prompts match your active search filters.</p>
+    </div>
+  </main>
+
+  <!-- Detail Inspector Modal -->
+  <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#121216] border border-zinc-800 rounded-2xl max-w-3xl w-full p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('detail-modal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-900 border border-zinc-800">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="w-full max-h-96 rounded-xl overflow-hidden mb-5 border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+        <img id="modal-img" src="" alt="Prompt Preview" class="w-full h-full object-contain" />
+      </div>
+
+      <div class="flex items-center gap-2 mb-2">
+        <span id="modal-model" class="text-xs font-semibold px-2.5 py-0.5 rounded bg-indigo-950 border border-indigo-800 text-indigo-300"></span>
+        <span id="modal-category" class="text-xs text-zinc-400"></span>
+        <span id="modal-ratio" class="text-xs font-mono text-zinc-500"></span>
+      </div>
+
+      <h2 id="modal-title" class="text-xl font-bold text-white mb-4"></h2>
+
+      <div class="bg-zinc-950 border border-zinc-800 p-4 rounded-xl mb-4">
+        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Prompt Blueprint</p>
+        <p id="modal-prompt" class="text-xs sm:text-sm font-mono text-zinc-300 leading-relaxed max-h-40 overflow-y-auto select-all"></p>
+      </div>
+
+      <div id="modal-negative-container" class="bg-zinc-950 border border-zinc-800 p-4 rounded-xl mb-4">
+        <p class="text-xs font-semibold uppercase tracking-wider text-red-400 mb-1">Negative Prompt</p>
+        <p id="modal-negative" class="text-xs font-mono text-zinc-400 leading-relaxed"></p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 mb-6 text-xs font-mono">
+        <div class="p-3 bg-zinc-900/60 rounded-lg border border-zinc-800/80">
+          <span class="text-zinc-500 block">Seed</span>
+          <span id="modal-seed" class="text-zinc-200 font-semibold"></span>
+        </div>
+        <div class="p-3 bg-zinc-900/60 rounded-lg border border-zinc-800/80">
+          <span class="text-zinc-500 block">CFG Scale</span>
+          <span id="modal-cfg" class="text-zinc-200 font-semibold"></span>
+        </div>
+        <div class="p-3 bg-zinc-900/60 rounded-lg border border-zinc-800/80">
+          <span class="text-zinc-500 block">Aspect Ratio</span>
+          <span id="modal-aspect" class="text-zinc-200 font-semibold"></span>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button onclick="closeModal('detail-modal')" class="px-4 py-2 rounded-full border border-zinc-800 text-xs text-zinc-300 hover:bg-zinc-800">
+          Close
+        </button>
+        <button id="modal-copy-btn" class="flex items-center gap-2 px-6 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-xs font-medium text-white transition-all shadow-lg shadow-indigo-600/30">
+          <i data-lucide="copy" class="w-4 h-4"></i>
+          <span>Copy Blueprint</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission Studio Modal -->
+  <div id="submit-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#121216] border border-zinc-800 rounded-2xl max-w-xl w-full p-6 sm:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('submit-modal')" class="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-900 border border-zinc-800">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h2 class="text-xl font-bold text-white mb-1">Post New Blueprint</h2>
+      <p class="text-xs text-zinc-400 mb-6">Store your AI prompt directly into the persistent live database.</p>
+
+      <form onsubmit="handleNewPromptSubmit(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold uppercase tracking-wider text-zinc-400 mb-1">Title</label>
+          <input required id="form-title" type="text" placeholder="e.g. Cyberpunk Alleyway in Heavy Fog" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block font-semibold uppercase tracking-wider text-zinc-400 mb-1">Image URL</label>
+          <input required id="form-image" type="url" placeholder="https://images.unsplash.com/... or any image link" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold uppercase tracking-wider text-zinc-400 mb-1">Model</label>
+            <select id="form-model" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300 focus:outline-none focus:border-indigo-500">
+              <option value="Midjourney v6">Midjourney v6</option>
+              <option value="FLUX.1 [dev]">FLUX.1 [dev]</option>
+              <option value="Stable Diffusion XL">Stable Diffusion XL</option>
+              <option value="GPT Image 2">GPT Image 2</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold uppercase tracking-wider text-zinc-400 mb-1">Category</label>
+            <select id="form-category" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300 focus:outline-none focus:border-indigo-500">
+              <option value="Photorealistic">Photorealistic</option>
+              <option value="Infographic">Infographic</option>
+              <option value="Cinematic">Cinematic</option>
+              <option value="Retro Art">Retro Art</option>
+              <option value="3D & Concept">3D & Concept</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold uppercase tracking-wider text-zinc-400 mb-1">Prompt Blueprint</label>
+          <textarea required id="form-prompt" rows="4" placeholder="Enter complete prompt text..." class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white font-mono leading-relaxed focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold uppercase tracking-wider text-zinc-400 mb-1">Negative Prompt (Optional)</label>
+          <input id="form-negative" type="text" placeholder="blurry, distorted, watermark, deformed" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <button type="submit" id="submit-btn" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white transition-all shadow-lg shadow-indigo-600/30">
+          Publish to Gallery
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Database Connection & Application Logic -->
+  <script>
+    // Replace with your real Supabase credentials
+    const SUPABASE_URL = "https://your-project-id.supabase.co";
+    const SUPABASE_ANON_KEY = "your-anon-key";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const MODELS = ["All", "Midjourney v6", "FLUX.1 [dev]", "Stable Diffusion XL", "GPT Image 2"];
+
+    let prompts = [];
+    let selectedModel = "All";
+    let selectedCategory = "All";
+    let searchQuery = "";
+
+    function initFilters() {
+      const container = document.getElementById("model-filters");
+      container.innerHTML = MODELS.map(mod => `
+        <button 
+          onclick="selectModel('${mod}')"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            selectedModel === mod 
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+              : 'bg-[#121216] border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+          }">
+          ${mod}
+        </button>
+      `).join("");
+    }
+
+    async function loadPrompts() {
+      try {
+        const { data, error } = await sb
+          .from("prompts")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          prompts = data;
+        } else {
+          // Fallback initial seeds if database is newly initialized
+          prompts = [
+            {
+              id: "p1",
+              title: "Exploded Drone Motor Schematic",
+              model: "GPT Image 2",
+              category: "Infographic",
+              aspect_ratio: "16:9",
+              prompt_text: "A technical exploded-view diagram of a brushless drone motor assembly, labeled vector callouts, white background.",
+              negative_prompt: "blurry, dark",
+              seed: 4920194,
+              cfg_scale: 7.0,
+              image_url: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+              id: "p2",
+              title: "Cinematic Neo-Tokyo Urban Pursuit",
+              model: "FLUX.1 [dev]",
+              category: "Cinematic",
+              aspect_ratio: "16:9",
+              prompt_text: "Cinematic film still, 35mm anamorphic photography, high-speed chase through neon-lit rain streets, 8k.",
+              negative_prompt: "lowres, plastic skin",
+              seed: 8812903,
+              cfg_scale: 6.5,
+              image_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80"
+            }
+          ];
+        }
+        renderFeed();
+      } catch (err) {
+        console.error("Database connection error:", err);
+      }
+    }
+
+    function renderFeed() {
+      const feed = document.getElementById("masonry-feed");
+      const empty = document.getElementById("empty-state");
+
+      const filtered = prompts.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchQuery) ||
+                              item.prompt_text.toLowerCase().includes(searchQuery);
+        const matchesModel = selectedModel === "All" || item.model === selectedModel;
+        const matchesCat = selectedCategory === "All" || item.category === selectedCategory;
+        return matchesSearch && matchesModel && matchesCat;
+      });
+
+      if (filtered.length === 0) {
+        feed.innerHTML = "";
+        empty.classList.remove("hidden");
+        return;
+      }
+
+      empty.classList.add("hidden");
+      feed.innerHTML = filtered.map(item => `
+        <div class="masonry-item group relative rounded-2xl bg-[#121216] border border-zinc-800/80 overflow-hidden cursor-pointer hover:border-zinc-700 transition-all hover:shadow-2xl" onclick="openDetail('${item.id}')">
+          <img src="${item.image_url}" alt="${item.title}" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          
+          <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-indigo-300 border border-white/10">
+                ${item.model}
+              </span>
+              <button onclick="copyPromptText('${item.id}', event)" class="p-2 rounded-full bg-zinc-800/90 hover:bg-indigo-600 text-white transition-all" title="Copy Prompt">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div>
+              <p class="text-xs font-bold text-white line-clamp-1 mb-1">${item.title}</p>
+              <p class="text-[11px] text-zinc-300 font-mono line-clamp-2 leading-relaxed">${item.prompt_text}</p>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      lucide.createIcons();
+    }
+
+    function selectModel(mod) {
+      selectedModel = mod;
+      initFilters();
+      renderFeed();
+    }
+
+    function handleCategoryChange() {
+      selectedCategory = document.getElementById("category-select").value;
+      renderFeed();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById("search-input").value.toLowerCase().trim();
+      renderFeed();
+    }
+
+    function copyPromptText(id, e) {
+      if (e) e.stopPropagation();
+      const item = prompts.find(p => p.id === id);
+      if (item) {
+        navigator.clipboard.writeText(item.prompt_text);
+        alert("Prompt copied to clipboard!");
+      }
+    }
+
+    function openDetail(id) {
+      const item = prompts.find(p => p.id === id);
+      if (!item) return;
+
+      document.getElementById("modal-img").src = item.image_url;
+      document.getElementById("modal-title").textContent = item.title;
+      document.getElementById("modal-model").textContent = item.model;
+      document.getElementById("modal-category").textContent = "• " + item.category;
+      document.getElementById("modal-ratio").textContent = "• " + (item.aspect_ratio || "16:9");
+      document.getElementById("modal-prompt").textContent = item.prompt_text;
+      document.getElementById("modal-seed").textContent = item.seed || "482019";
+      document.getElementById("modal-cfg").textContent = item.cfg_scale || "7.0";
+      document.getElementById("modal-aspect").textContent = item.aspect_ratio || "16:9";
+
+      const negBox = document.getElementById("modal-negative-container");
+      if (item.negative_prompt) {
+        document.getElementById("modal-negative").textContent = item.negative_prompt;
+        negBox.classList.remove("hidden");
+      } else {
+        negBox.classList.add("hidden");
+      }
+
+      document.getElementById("modal-copy-btn").onclick = () => {
+        navigator.clipboard.writeText(item.prompt_text);
+        alert("Copied blueprint to clipboard!");
+      };
+
+      openModal("detail-modal");
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+
+    async function handleNewPromptSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById("submit-btn");
+      btn.textContent = "Publishing...";
+      btn.disabled = true;
+
+      const newEntry = {
+        title: document.getElementById("form-title").value,
+        image_url: document.getElementById("form-image").value,
+        model: document.getElementById("form-model").value,
+        category: document.getElementById("form-category").value,
+        prompt_text: document.getElementById("form-prompt").value,
+        negative_prompt: document.getElementById("form-negative").value || null,
+        aspect_ratio: "16:9",
+        seed: Math.floor(Math.random() * 9000000) + 100000,
+        cfg_scale: 7.0
+      };
+
+      const { error } = await sb.from("prompts").insert([newEntry]);
+      btn.textContent = "Publish to Gallery";
+      btn.disabled = false;
+
+      if (!error) {
+        e.target.reset();
+        closeModal("submit-modal");
+        loadPrompts();
+        alert("Prompt successfully published to live database!");
+      } else {
+        alert("Database error: " + error.message);
+      }
+    }
+
+    // Initialize
+    initFilters();
+    loadPrompts();
+  </script>
+</body>
+</html>
