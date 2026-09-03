@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { Search, Copy, Check, Sparkles, SlidersHorizontal, Image as ImageIcon, Plus, X } from "lucide-react";
-
+export const dynamic = 'force-dynamic';
 export interface PromptRecord {
   id: string;
   title: string;
