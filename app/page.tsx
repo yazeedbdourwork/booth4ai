@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import {
@@ -76,7 +75,7 @@ export default function Prompt4aiHomePage() {
   const [authPassword, setAuthPassword] = useState<string>("");
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
-
+  const [authUsername, setAuthUsername] = useState<string>("");
   useEffect(() => {
     // 1. Fetch prompts
     async function loadData() {
