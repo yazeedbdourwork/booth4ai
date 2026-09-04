@@ -10,7 +10,12 @@ import {
   Sparkles,
   X,
   Download,
+  User as UserIcon,
+  LogOut,
+  Mail,
+  Lock,
 } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
 export interface PromptItem {
   id: string;
@@ -63,7 +68,17 @@ export default function Prompt4aiHomePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [modalCopied, setModalCopied] = useState<boolean>(false);
 
+  // Authentication states
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authEmail, setAuthEmail] = useState<string>("");
+  const [authPassword, setAuthPassword] = useState<string>("");
+  const [authLoading, setAuthLoading] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   useEffect(() => {
+    // 1. Fetch prompts
     async function loadData() {
       setLoading(true);
       try {
@@ -82,6 +97,20 @@ export default function Prompt4aiHomePage() {
       }
     }
     loadData();
+
+    // 2. Check current Supabase session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    // 3. Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleCopy = (id: string, text: string, e?: React.MouseEvent) => {
@@ -95,6 +124,41 @@ export default function Prompt4aiHomePage() {
     navigator.clipboard.writeText(text);
     setModalCopied(true);
     setTimeout(() => setModalCopied(false), 1800);
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      if (authMode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+        alert("Check your email for the confirmation link!");
+      }
+      setShowAuthModal(false);
+      setAuthEmail("");
+      setAuthPassword("");
+    } catch (err: any) {
+      setAuthError(err.message || "Authentication failed");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setCurrentUser(null);
   };
 
   const filteredPrompts = useMemo(() => {
@@ -159,9 +223,31 @@ export default function Prompt4aiHomePage() {
               <span className="text-sm">🎨</span>
             </a>
 
-            <button className="rounded-lg bg-black px-4 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-800">
-              Sign in
-            </button>
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden text-xs font-semibold text-zinc-700 sm:inline">
+                  {currentUser.email?.split("@")[0]}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  title="Sign Out"
+                  className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span>Sign out</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setAuthError(null);
+                  setShowAuthModal(true);
+                }}
+                className="rounded-lg bg-black px-4 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-800"
+              >
+                Sign in
+              </button>
+            )}
           </div>
         </div>
 
@@ -267,7 +353,7 @@ export default function Prompt4aiHomePage() {
           </div>
         ) : filteredPrompts.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center text-center text-zinc-400">
-            <Sparkles className="h-8 w-8 text-zinc-300 mb-2" />
+            <Sparkles className="mb-2 h-8 w-8 text-zinc-300" />
             <p className="text-sm font-semibold text-zinc-700">No prompts found</p>
             <p className="text-xs text-zinc-400">Try searching for different models or terms</p>
           </div>
@@ -293,11 +379,11 @@ export default function Prompt4aiHomePage() {
                 </div>
 
                 <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  <p className="line-clamp-2 text-[11px] leading-snug text-white font-normal">
+                  <p className="line-clamp-2 text-[11px] font-normal leading-snug text-white">
                     {item.prompt}
                   </p>
 
-                  <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-white/10">
+                  <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2">
                     <span className="text-[10px] font-medium text-zinc-300">
                       {item.category || "AI Art"}
                     </span>
@@ -326,7 +412,7 @@ export default function Prompt4aiHomePage() {
         )}
       </main>
 
-      {/* 5. MODAL DIALOG */}
+      {/* 5. PROMPT DETAILS MODAL */}
       {selectedPrompt && (
         <div
           onClick={() => setSelectedPrompt(null)}
@@ -409,7 +495,7 @@ export default function Prompt4aiHomePage() {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center gap-2 pt-4 border-t border-zinc-200">
+              <div className="mt-6 flex items-center gap-2 border-t border-zinc-200 pt-4">
                 <button
                   onClick={() => handleCopyModal(selectedPrompt.prompt)}
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-black py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800"
@@ -427,6 +513,121 @@ export default function Prompt4aiHomePage() {
                   <Download className="h-3.5 w-3.5" />
                 </a>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. SIGN IN / AUTHENTICATION MODAL */}
+      {showAuthModal && (
+        <div
+          onClick={() => setShowAuthModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl transition-all"
+          >
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute right-4 top-4 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-6 text-center">
+              <h3 className="text-xl font-black text-black">
+                {authMode === "signin" ? "Welcome back" : "Create your account"}
+              </h3>
+              <p className="mt-1 text-xs text-zinc-500">
+                {authMode === "signin"
+                  ? "Sign in to save prompts and access Pro features"
+                  : "Join the prompt4ai community to submit and explore prompts"}
+              </p>
+            </div>
+
+            {authError && (
+              <div className="mb-4 rounded-lg bg-red-50 p-2.5 text-xs text-red-600">
+                {authError}
+              </div>
+            )}
+
+            <form onSubmit={handleAuthSubmit} className="space-y-3.5">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600">
+                  Email
+                </label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="email"
+                    required
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-xs text-zinc-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600">
+                  Password
+                </label>
+                <div className="relative mt-1">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <input
+                    type="password"
+                    required
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg border border-zinc-200 py-2 pl-9 pr-3 text-xs text-zinc-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="mt-2 flex w-full items-center justify-center rounded-lg bg-black py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800 disabled:opacity-50"
+              >
+                {authLoading
+                  ? "Processing..."
+                  : authMode === "signin"
+                  ? "Sign In"
+                  : "Create Account"}
+              </button>
+            </form>
+
+            <div className="mt-5 text-center text-xs text-zinc-500">
+              {authMode === "signin" ? (
+                <>
+                  Don't have an account?{" "}
+                  <button
+                    onClick={() => {
+                      setAuthError(null);
+                      setAuthMode("signup");
+                    }}
+                    className="font-bold text-black hover:underline"
+                  >
+                    Sign up
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    onClick={() => {
+                      setAuthError(null);
+                      setAuthMode("signin");
+                    }}
+                    className="font-bold text-black hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
