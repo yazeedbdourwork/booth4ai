@@ -6,16 +6,14 @@ import {
   Search,
   Copy,
   Check,
-  Sparkles,
-  Flame,
-  Clock,
+  ChevronDown,
+  Wand2,
+  Bookmark,
   Heart,
+  Share2,
   X,
   Download,
-  Share2,
-  ExternalLink,
-  Layers,
-  Sliders,
+  Sparkles,
 } from "lucide-react";
 
 export interface PromptItem {
@@ -33,32 +31,44 @@ export interface PromptItem {
   author_name?: string;
 }
 
-const MODELS = ["All", "Midjourney", "FLUX.1", "Stable Diffusion", "DALL-E 3"];
-const CATEGORIES = [
-  "All",
-  "Photorealistic",
-  "Portraits",
-  "Anime & Manga",
-  "Cinematic",
-  "Logos & Icons",
-  "Architecture",
-  "Concept Art",
+const NAV_CATEGORIES = [
+  "Featured",
+  "Hot",
+  "New",
+  "Top",
+  "Video",
+  "ChatGPT Image",
+  "Midjourney",
+  "Nano Banana",
+  "Veo",
+  "FLUX",
+  "Sora",
+  "Stable Diffusion",
+  "Photography",
+  "Anime",
   "Fashion",
-  "Cyberpunk",
+  "Architecture",
 ];
 
-export default function PromptHeroClone() {
+const SEARCH_MODELS = [
+  "Midjourney",
+  "Seedance",
+  "Nano Banana",
+  "FLUX",
+  "Stable Diffusion",
+];
+
+export default function PromptHeroHomePage() {
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("All");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [activeCategory, setActiveCategory] = useState<string>("Featured");
   const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [copiedModal, setCopiedModal] = useState<boolean>(false);
+  const [modalCopied, setModalCopied] = useState<boolean>(false);
 
   useEffect(() => {
-    async function fetchPrompts() {
+    async function loadData() {
       setLoading(true);
       try {
         const { data, error } = await supabase
@@ -70,114 +80,106 @@ export default function PromptHeroClone() {
           setPrompts(data as PromptItem[]);
         }
       } catch (err) {
-        console.error("Failed to load prompts from Supabase:", err);
+        console.error("Error querying prompts:", err);
       } finally {
         setLoading(false);
       }
     }
-
-    fetchPrompts();
+    loadData();
   }, []);
 
   const handleCopy = (id: string, text: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), 1800);
   };
 
   const handleCopyModal = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedModal(true);
-    setTimeout(() => setCopiedModal(false), 2000);
+    setModalCopied(true);
+    setTimeout(() => setModalCopied(false), 1800);
   };
 
   const filteredPrompts = useMemo(() => {
-    return prompts.filter((item) => {
-      const textMatch =
+    return prompts.filter((p) => {
+      const matchSearch =
         !searchQuery ||
-        item.prompt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category?.toLowerCase().includes(searchQuery.toLowerCase());
+        p.prompt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.category?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const modelMatch =
-        selectedModel === "All" ||
-        item.model?.toLowerCase().includes(selectedModel.toLowerCase());
+      const matchCategory =
+        activeCategory === "Featured" ||
+        activeCategory === "Hot" ||
+        activeCategory === "New" ||
+        p.model?.toLowerCase().includes(activeCategory.toLowerCase()) ||
+        p.category?.toLowerCase().includes(activeCategory.toLowerCase());
 
-      const categoryMatch =
-        selectedCategory === "All" ||
-        item.category?.toLowerCase().includes(selectedCategory.toLowerCase());
-
-      return textMatch && modelMatch && categoryMatch;
+      return matchSearch && matchCategory;
     });
-  }, [prompts, searchQuery, selectedModel, selectedCategory]);
+  }, [prompts, searchQuery, activeCategory]);
 
   return (
-    <div className="min-h-screen bg-[#0b0f17] text-zinc-100 selection:bg-indigo-600 selection:text-white">
-      {/* 1. PromptHero Sticky Navbar */}
-      <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-[#0b0f17]/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1850px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          {/* Logo */}
-          <div className="flex items-center gap-8">
-            <a href="/" className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-white">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <span>Prompt<span className="text-indigo-400">Hero</span></span>
+    <div className="min-h-screen bg-white text-zinc-900 selection:bg-rose-500 selection:text-white">
+      {/* 1. TOP WHITE HEADER */}
+      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
+        <div className="mx-auto flex h-16 max-w-[1720px] items-center justify-between px-4 sm:px-6">
+          {/* Brand & Left Navigation */}
+          <div className="flex items-center gap-7">
+            <a href="/" className="text-[22px] font-black tracking-tighter text-black">
+              Prompt<span className="font-extrabold text-zinc-800">Hero</span>
             </a>
 
-            {/* Model Tabs */}
-            <nav className="hidden items-center gap-1 md:flex">
-              {MODELS.map((model) => (
-                <button
-                  key={model}
-                  onClick={() => setSelectedModel(model)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                    selectedModel === model
-                      ? "bg-zinc-800 text-white shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-100"
-                  }`}
-                >
-                  {model}
-                </button>
-              ))}
+            <nav className="hidden items-center gap-5 text-[13px] font-semibold text-zinc-600 lg:flex">
+              <a href="#create" className="flex items-center gap-1 hover:text-black">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Create</span>
+              </a>
+              <div className="flex cursor-pointer items-center gap-0.5 hover:text-black">
+                <span>Tools</span>
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </div>
+              <div className="flex cursor-pointer items-center gap-0.5 hover:text-black">
+                <span>Academy</span>
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </div>
+              <a href="#pricing" className="hover:text-black">
+                Pricing
+              </a>
+              <a href="#community" className="hover:text-black">
+                Community
+              </a>
             </nav>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative max-w-xl flex-1">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search prompts (e.g. realistic portrait, cyber city, retro anime)..."
-              className="w-full rounded-full border border-zinc-800 bg-zinc-900/90 py-2 pl-10 pr-4 text-xs text-zinc-200 placeholder-zinc-500 transition focus:border-indigo-500 focus:bg-zinc-950 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Action Buttons */}
+          {/* Right Actions */}
           <div className="flex items-center gap-3">
-            <button className="hidden rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-700 hover:text-white sm:block">
-              Submit Prompt
-            </button>
-            <button className="rounded-full bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/30 transition hover:bg-indigo-500">
-              Get Pro
+            <a
+              href="#generate"
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:opacity-95"
+            >
+              <span>Turn words and images into 3D models</span>
+              <span className="text-sm">🎨</span>
+            </a>
+
+            <button className="rounded-lg bg-black px-4 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-800">
+              Sign in
             </button>
           </div>
         </div>
 
-        {/* 2. Sub-Header Category Pills */}
-        <div className="border-t border-zinc-900 bg-[#090d14] px-4 py-2 sm:px-6">
-          <div className="mx-auto flex max-w-[1850px] gap-2 overflow-x-auto no-scrollbar">
-            {CATEGORIES.map((cat) => (
+        {/* Horizontal Submenu Bar */}
+        <div className="border-t border-zinc-100 bg-white px-4 py-2 sm:px-6">
+          <div className="mx-auto flex max-w-[1720px] gap-6 overflow-x-auto no-scrollbar text-xs font-medium text-zinc-500">
+            {NAV_CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap rounded-full px-3.5 py-1 text-[11px] font-medium transition ${
-                  selectedCategory === cat
-                    ? "bg-white text-zinc-950 font-semibold shadow"
-                    : "border border-zinc-800/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                onClick={() => setActiveCategory(cat)}
+                className={`whitespace-nowrap pb-0.5 transition ${
+                  activeCategory === cat
+                    ? "font-bold text-black border-b-2 border-black"
+                    : "hover:text-black"
                 }`}
               >
                 {cat}
@@ -187,65 +189,139 @@ export default function PromptHeroClone() {
         </div>
       </header>
 
-      {/* 3. Masonry Gallery */}
-      <main className="mx-auto max-w-[1850px] px-4 py-6 sm:px-6">
+      {/* 2. HERO BANNER WITH ARTISTIC BACKGROUND */}
+      <section className="relative flex min-h-[460px] flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#3a2016] via-[#1a0f0d] to-[#0d0908] px-4 py-16 text-center text-white">
+        {/* Ambient Warm Sunset Backlight */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(234,88,12,0.35),transparent_70%)]" />
+
+        <div className="relative z-10 mx-auto max-w-3xl">
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
+            PromptHero
+          </h1>
+          <p className="mt-2 text-lg font-medium text-orange-100/90 sm:text-xl">
+            The #1 website for prompt engineering
+          </p>
+          <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-zinc-300 sm:text-sm">
+            Search millions of AI prompts for Midjourney, Stable Diffusion, Sora,
+            and every leading generative model. Discover hand-picked inspiration
+            from the PromptHero community.
+          </p>
+
+          {/* Centered Large Search Input with Embedded Black Button */}
+          <div className="mt-8 flex w-full items-center rounded-full bg-white p-1.5 shadow-2xl">
+            <Search className="ml-3.5 h-4 w-4 text-zinc-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for prompts, models, or inspiration..."
+              className="w-full bg-transparent px-3 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none sm:text-sm"
+            />
+            <button
+              onClick={() => {}}
+              className="rounded-full bg-black px-6 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800"
+            >
+              Search
+            </button>
+          </div>
+
+          {/* Model Tags Beneath Search */}
+          <div className="mt-6 flex flex-col items-center gap-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+              Search by model
+            </span>
+            <div className="flex flex-wrap justify-center gap-2">
+              {SEARCH_MODELS.map((model) => (
+                <button
+                  key={model}
+                  onClick={() => setSearchQuery(model)}
+                  className="rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-medium text-zinc-200 backdrop-blur-md transition hover:bg-white/25 hover:text-white"
+                >
+                  {model}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. AS SEEN IN PRESS LOGO STRIP */}
+      <section className="border-y border-zinc-200 bg-white py-4">
+        <div className="mx-auto flex max-w-[1720px] flex-wrap items-center justify-between gap-6 px-4 text-zinc-400 sm:px-6">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+            As seen in
+          </span>
+          <div className="flex flex-wrap items-center gap-8 text-xs font-serif font-bold tracking-tight text-zinc-700 sm:gap-12">
+            <span>The New York Times</span>
+            <span>The Washington Post</span>
+            <span className="font-sans font-black tracking-tighter">BUSINESS INSIDER</span>
+            <span className="font-sans font-bold">ABC</span>
+            <span className="font-sans font-black text-red-600">POLITICO</span>
+            <span className="font-sans font-black text-emerald-600">TC</span>
+            <span className="font-sans font-bold">FAST COMPANY</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. SEAMLESS PROMPTHERO FEED GRID */}
+      <main className="mx-auto max-w-[1850px] px-2 py-4 sm:px-4">
         {loading ? (
-          <div className="flex h-96 flex-col items-center justify-center gap-3 text-zinc-500">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent"></div>
-            <p className="text-xs font-medium tracking-wide">Loading prompts...</p>
+          <div className="flex h-72 flex-col items-center justify-center gap-3 text-zinc-400">
+            <div className="h-7 w-7 animate-spin rounded-full border-2 border-black border-t-transparent"></div>
+            <p className="text-xs">Loading library...</p>
           </div>
         ) : filteredPrompts.length === 0 ? (
-          <div className="flex h-96 flex-col items-center justify-center text-center">
-            <Layers className="mb-3 h-10 w-10 text-zinc-600" />
-            <p className="text-sm font-semibold text-zinc-400">No prompts found</p>
-            <p className="mt-1 text-xs text-zinc-600">Try changing your search terms or filters</p>
+          <div className="flex h-64 flex-col items-center justify-center text-center text-zinc-400">
+            <Sparkles className="h-8 w-8 text-zinc-300 mb-2" />
+            <p className="text-sm font-semibold text-zinc-700">No prompts found</p>
+            <p className="text-xs text-zinc-400">Try searching for different models or terms</p>
           </div>
         ) : (
-          <div className="ph-masonry">
+          <div className="columns-1 gap-2 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6">
             {filteredPrompts.map((item) => (
               <div
                 key={item.id}
                 onClick={() => setSelectedPrompt(item)}
-                className="ph-masonry-card group relative cursor-pointer overflow-hidden rounded-xl border border-zinc-800/70 bg-zinc-900 transition-all duration-300 hover:border-zinc-700 hover:shadow-2xl hover:shadow-black"
+                className="group relative mb-2 cursor-pointer break-inside-avoid overflow-hidden rounded-md bg-zinc-100 transition duration-200 hover:shadow-lg"
               >
                 {/* Image */}
                 <img
                   src={item.image_url}
                   alt={item.prompt}
                   loading="lazy"
-                  className="w-full object-cover transition duration-500 group-hover:scale-[1.01]"
+                  className="w-full object-cover transition duration-300 group-hover:brightness-95"
                 />
 
-                {/* Model Pill Tag */}
-                <div className="absolute left-3 top-3 z-10">
-                  <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-300 backdrop-blur-md">
+                {/* Top Model Badge */}
+                <div className="absolute left-2.5 top-2.5">
+                  <span className="rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
                     {item.model}
                   </span>
                 </div>
 
-                {/* Dark Hover Card with Prompt Hero Action Bar */}
-                <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/95 via-black/50 to-transparent p-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  <p className="line-clamp-3 text-xs leading-relaxed text-zinc-200 font-light">
+                {/* PromptHero Dark Card Bottom Hover Overlay */}
+                <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <p className="line-clamp-2 text-[11px] leading-snug text-white font-normal">
                     {item.prompt}
                   </p>
 
-                  <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/10">
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">
-                      {item.category || "General"}
+                  <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-white/10">
+                    <span className="text-[10px] font-medium text-zinc-300">
+                      {item.category || "AI Art"}
                     </span>
 
                     <button
                       onClick={(e) => handleCopy(item.id, item.prompt, e)}
-                      className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/25 active:scale-95"
+                      className="flex items-center gap-1 rounded bg-white/20 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-md transition hover:bg-white/30"
                     >
                       {copiedId === item.id ? (
                         <>
-                          <Check className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="text-emerald-400">Copied</span>
+                          <Check className="h-3 w-3 text-emerald-400" />
+                          <span>Copied</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="h-3.5 w-3.5" />
+                          <Copy className="h-3 w-3" />
                           <span>Copy</span>
                         </>
                       )}
@@ -258,124 +334,108 @@ export default function PromptHeroClone() {
         )}
       </main>
 
-      {/* 4. Prompt Details Modal (PromptHero Inspection Mode) */}
+      {/* 5. MODAL DIALOG ON CARD CLICK */}
       {selectedPrompt && (
         <div
           onClick={() => setSelectedPrompt(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-[#0d121c] shadow-2xl md:flex-row"
+            className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white text-zinc-900 shadow-2xl md:flex-row"
           >
             {/* Close Button */}
             <button
               onClick={() => setSelectedPrompt(null)}
-              className="absolute right-4 top-4 z-20 rounded-full bg-black/60 p-2 text-zinc-400 backdrop-blur-md transition hover:bg-black/90 hover:text-white"
+              className="absolute right-3.5 top-3.5 z-20 rounded-full bg-black/50 p-1.5 text-white transition hover:bg-black"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
 
-            {/* Left: Image Canvas */}
-            <div className="flex flex-1 items-center justify-center bg-black/50 p-4 md:max-w-[55%]">
+            {/* Left: Full Media Canvas */}
+            <div className="flex flex-1 items-center justify-center bg-zinc-950 p-4">
               <img
                 src={selectedPrompt.image_url}
                 alt={selectedPrompt.prompt}
-                className="max-h-[75vh] w-auto rounded-lg object-contain"
+                className="max-h-[70vh] w-auto rounded object-contain"
               />
             </div>
 
-            {/* Right: Prompt Parameters & Details */}
-            <div className="flex flex-1 flex-col justify-between overflow-y-auto p-6 text-sm">
-              <div className="space-y-6">
-                {/* Header info */}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-indigo-500/20 px-2.5 py-1 text-xs font-bold text-indigo-400">
-                      {selectedPrompt.model}
-                    </span>
-                    <span className="rounded-md bg-zinc-800 px-2.5 py-1 text-xs text-zinc-300">
-                      {selectedPrompt.category || "General"}
-                    </span>
-                  </div>
-                  <h2 className="mt-3 text-lg font-bold text-white">Prompt Details</h2>
+            {/* Right: Technical Prompt Specifications */}
+            <div className="flex flex-1 flex-col justify-between overflow-y-auto p-6 text-xs">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-700">
+                    {selectedPrompt.model}
+                  </span>
+                  <span className="text-[10px] font-medium text-zinc-400">
+                    {selectedPrompt.category || "AI Generation"}
+                  </span>
                 </div>
 
-                {/* Positive Prompt */}
                 <div>
-                  <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                     <span>Prompt</span>
                     <button
                       onClick={() => handleCopyModal(selectedPrompt.prompt)}
-                      className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300"
+                      className="flex items-center gap-1 font-semibold text-black hover:text-zinc-600"
                     >
-                      {copiedModal ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      <span>{copiedModal ? "Copied" : "Copy text"}</span>
+                      {modalCopied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                      <span>{modalCopied ? "Copied" : "Copy"}</span>
                     </button>
                   </div>
-                  <p className="mt-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-3 text-xs leading-relaxed text-zinc-200">
+                  <p className="mt-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs leading-relaxed text-zinc-800">
                     {selectedPrompt.prompt}
                   </p>
                 </div>
 
-                {/* Negative Prompt (if available) */}
                 {selectedPrompt.negative_prompt && (
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                       Negative Prompt
                     </span>
-                    <p className="mt-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-3 text-xs leading-relaxed text-zinc-400">
+                    <p className="mt-1 rounded-lg border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-600">
                       {selectedPrompt.negative_prompt}
                     </p>
                   </div>
                 )}
 
-                {/* Metadata Grid */}
-                <div className="grid grid-cols-2 gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-4 text-xs">
+                <div className="grid grid-cols-2 gap-2.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
                   <div>
-                    <span className="text-zinc-500">Aspect Ratio</span>
-                    <p className="mt-0.5 font-medium text-zinc-300">
-                      {selectedPrompt.aspect_ratio || "1:1"}
-                    </p>
+                    <span className="text-[10px] text-zinc-400">Aspect Ratio</span>
+                    <p className="font-semibold text-zinc-700">{selectedPrompt.aspect_ratio || "1:1"}</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500">CFG Scale</span>
-                    <p className="mt-0.5 font-medium text-zinc-300">
-                      {selectedPrompt.cfg_scale || "7.0"}
-                    </p>
+                    <span className="text-[10px] text-zinc-400">CFG Scale</span>
+                    <p className="font-semibold text-zinc-700">{selectedPrompt.cfg_scale || "7"}</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500">Seed</span>
-                    <p className="mt-0.5 font-medium text-zinc-300">
-                      {selectedPrompt.seed || "Random"}
-                    </p>
+                    <span className="text-[10px] text-zinc-400">Seed</span>
+                    <p className="font-semibold text-zinc-700">{selectedPrompt.seed || "Random"}</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500">Author</span>
-                    <p className="mt-0.5 font-medium text-zinc-300">
-                      {selectedPrompt.author_name || "Community"}
-                    </p>
+                    <span className="text-[10px] text-zinc-400">Author</span>
+                    <p className="font-semibold text-zinc-700">{selectedPrompt.author_name || "Community"}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="mt-8 flex items-center gap-3 pt-4 border-t border-zinc-800">
+              <div className="mt-6 flex items-center gap-2 pt-4 border-t border-zinc-200">
                 <button
                   onClick={() => handleCopyModal(selectedPrompt.prompt)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-black py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800"
                 >
-                  <Copy className="h-4 w-4" />
-                  <span>{copiedModal ? "Copied Prompt" : "Copy Full Prompt"}</span>
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>{modalCopied ? "Copied" : "Copy Full Prompt"}</span>
                 </button>
                 <a
                   href={selectedPrompt.image_url}
                   target="_blank"
                   rel="noreferrer"
                   download
-                  className="flex items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-zinc-300 transition hover:border-zinc-700 hover:text-white"
+                  className="flex items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-zinc-700 transition hover:bg-zinc-100"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-3.5 w-3.5" />
                 </a>
               </div>
             </div>
