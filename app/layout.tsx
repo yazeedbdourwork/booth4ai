@@ -1,9 +1,9 @@
-import "./globals.css";
-import React from "react";
 import type { Metadata } from "next";
+import "./globals.css";
+
 export const metadata: Metadata = {
-  title: "PromptVault — AI Visual Discovery & Prompt Engineering",
-  description: "Search millions of AI prompts for Midjourney, FLUX.1, Stable Diffusion, and GPT Image models.",
+  title: "prompt4ai – The #1 website for prompt engineering",
+  description: "Search millions of AI prompts for Midjourney, Stable Diffusion, Sora, and leading generative models.",
 };
 
 export default function RootLayout({
@@ -13,9 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-[#09090b] text-zinc-100 antialiased selection:bg-indigo-600 selection:text-white">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
