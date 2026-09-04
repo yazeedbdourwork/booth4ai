@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import "./globals.css";
-
+import React from "react";
+import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "PromptVault — AI Visual Discovery & Prompt Engineering",
   description: "Search millions of AI prompts for Midjourney, FLUX.1, Stable Diffusion, and GPT Image models.",
