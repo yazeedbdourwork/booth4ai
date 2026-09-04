@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { ... } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { Search, Copy, Check, Sparkles, SlidersHorizontal, Image as ImageIcon, Plus, X } from "lucide-react";
 export interface PromptRecord {
   id: string;
