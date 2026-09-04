@@ -7,13 +7,9 @@ import {
   Copy,
   Check,
   ChevronDown,
-  Wand2,
-  Bookmark,
-  Heart,
-  Share2,
+  Sparkles,
   X,
   Download,
-  Sparkles,
 } from "lucide-react";
 
 export interface PromptItem {
@@ -58,7 +54,7 @@ const SEARCH_MODELS = [
   "Stable Diffusion",
 ];
 
-export default function PromptHeroHomePage() {
+export default function Prompt4aiHomePage() {
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -128,7 +124,7 @@ export default function PromptHeroHomePage() {
           {/* Brand & Left Navigation */}
           <div className="flex items-center gap-7">
             <a href="/" className="text-[22px] font-black tracking-tighter text-black">
-              Prompt<span className="font-extrabold text-zinc-800">Hero</span>
+              prompt<span className="font-extrabold text-zinc-800">4ai</span>
             </a>
 
             <nav className="hidden items-center gap-5 text-[13px] font-semibold text-zinc-600 lg:flex">
@@ -191,12 +187,11 @@ export default function PromptHeroHomePage() {
 
       {/* 2. HERO BANNER WITH ARTISTIC BACKGROUND */}
       <section className="relative flex min-h-[460px] flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#3a2016] via-[#1a0f0d] to-[#0d0908] px-4 py-16 text-center text-white">
-        {/* Ambient Warm Sunset Backlight */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(234,88,12,0.35),transparent_70%)]" />
 
         <div className="relative z-10 mx-auto max-w-3xl">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
-            PromptHero
+            prompt4ai
           </h1>
           <p className="mt-2 text-lg font-medium text-orange-100/90 sm:text-xl">
             The #1 website for prompt engineering
@@ -204,10 +199,10 @@ export default function PromptHeroHomePage() {
           <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-zinc-300 sm:text-sm">
             Search millions of AI prompts for Midjourney, Stable Diffusion, Sora,
             and every leading generative model. Discover hand-picked inspiration
-            from the PromptHero community.
+            from the prompt4ai community.
           </p>
 
-          {/* Centered Large Search Input with Embedded Black Button */}
+          {/* Centered Search Input */}
           <div className="mt-8 flex w-full items-center rounded-full bg-white p-1.5 shadow-2xl">
             <Search className="ml-3.5 h-4 w-4 text-zinc-400" />
             <input
@@ -225,7 +220,7 @@ export default function PromptHeroHomePage() {
             </button>
           </div>
 
-          {/* Model Tags Beneath Search */}
+          {/* Model Tags */}
           <div className="mt-6 flex flex-col items-center gap-2.5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
               Search by model
@@ -263,7 +258,7 @@ export default function PromptHeroHomePage() {
         </div>
       </section>
 
-      {/* 4. SEAMLESS PROMPTHERO FEED GRID */}
+      {/* 4. FEED GRID */}
       <main className="mx-auto max-w-[1850px] px-2 py-4 sm:px-4">
         {loading ? (
           <div className="flex h-72 flex-col items-center justify-center gap-3 text-zinc-400">
@@ -284,7 +279,6 @@ export default function PromptHeroHomePage() {
                 onClick={() => setSelectedPrompt(item)}
                 className="group relative mb-2 cursor-pointer break-inside-avoid overflow-hidden rounded-md bg-zinc-100 transition duration-200 hover:shadow-lg"
               >
-                {/* Image */}
                 <img
                   src={item.image_url}
                   alt={item.prompt}
@@ -292,14 +286,12 @@ export default function PromptHeroHomePage() {
                   className="w-full object-cover transition duration-300 group-hover:brightness-95"
                 />
 
-                {/* Top Model Badge */}
                 <div className="absolute left-2.5 top-2.5">
                   <span className="rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
                     {item.model}
                   </span>
                 </div>
 
-                {/* PromptHero Dark Card Bottom Hover Overlay */}
                 <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                   <p className="line-clamp-2 text-[11px] leading-snug text-white font-normal">
                     {item.prompt}
@@ -334,7 +326,7 @@ export default function PromptHeroHomePage() {
         )}
       </main>
 
-      {/* 5. MODAL DIALOG ON CARD CLICK */}
+      {/* 5. MODAL DIALOG */}
       {selectedPrompt && (
         <div
           onClick={() => setSelectedPrompt(null)}
@@ -344,7 +336,6 @@ export default function PromptHeroHomePage() {
             onClick={(e) => e.stopPropagation()}
             className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white text-zinc-900 shadow-2xl md:flex-row"
           >
-            {/* Close Button */}
             <button
               onClick={() => setSelectedPrompt(null)}
               className="absolute right-3.5 top-3.5 z-20 rounded-full bg-black/50 p-1.5 text-white transition hover:bg-black"
@@ -352,7 +343,6 @@ export default function PromptHeroHomePage() {
               <X className="h-4 w-4" />
             </button>
 
-            {/* Left: Full Media Canvas */}
             <div className="flex flex-1 items-center justify-center bg-zinc-950 p-4">
               <img
                 src={selectedPrompt.image_url}
@@ -361,7 +351,6 @@ export default function PromptHeroHomePage() {
               />
             </div>
 
-            {/* Right: Technical Prompt Specifications */}
             <div className="flex flex-1 flex-col justify-between overflow-y-auto p-6 text-xs">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
